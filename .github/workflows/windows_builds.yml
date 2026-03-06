@@ -6,7 +6,7 @@ on:
 # Global Settings
 env:
   SCONS_FLAGS: >-
-    dev_mode=no
+    dev_mode=yes
     module_text_server_fb_enabled=yes
     debug_symbols=no
     module_mono_enabled=yes
