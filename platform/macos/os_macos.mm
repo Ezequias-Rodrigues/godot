@@ -31,17 +31,20 @@
 #import "os_macos.h"
 
 #import "dir_access_macos.h"
-#ifdef TOOLS_ENABLED
-#import "display_server_macos_embedded.h"
-#endif
 #import "display_server_macos.h"
 #import "godot_application.h"
 #import "godot_application_delegate.h"
 
+#ifdef TOOLS_ENABLED
+#import "display_server_macos_embedded.h"
+#endif
+
+#include "core/config/engine.h"
 #include "core/crypto/crypto_core.h"
 #include "core/input/input.h"
 #include "core/io/file_access.h"
 #include "core/os/main_loop.h"
+#include "core/os/os.h"
 #include "core/profiling/profiling.h"
 #include "core/version_generated.gen.h"
 #include "drivers/apple/os_log_logger.h"
@@ -58,7 +61,14 @@
 #include <sys/sysctl.h>
 
 void OS_MacOS::add_frame_delay(bool p_can_draw, bool p_wake_for_events) {
-	if (p_wake_for_events) {
+	bool wake_for_events = p_wake_for_events;
+	if (!wake_for_events) {
+		NSArray<NSRunningApplication *> *proc_array = [NSRunningApplication runningApplicationsWithBundleIdentifier:@"com.crowdcafe.windowmagnet"];
+		if (proc_array && proc_array.count > 0) {
+			wake_for_events = true;
+		}
+	}
+	if (wake_for_events) {
 		uint64_t delay = get_frame_delay(p_can_draw);
 		if (delay == 0) {
 			return;
@@ -76,7 +86,7 @@ void OS_MacOS::add_frame_delay(bool p_can_draw, bool p_wake_for_events) {
 		CFRunLoopAddTimer(CFRunLoopGetCurrent(), wait_timer, kCFRunLoopCommonModes);
 		return;
 	}
-	OS_Unix::add_frame_delay(p_can_draw, p_wake_for_events);
+	OS_Unix::add_frame_delay(p_can_draw, wake_for_events);
 }
 
 void OS_MacOS::initialize() {
